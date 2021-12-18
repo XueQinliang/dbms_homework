@@ -117,6 +117,7 @@ Expr* Expr::makeLiteral(double value) {
 }
 
 Expr* Expr::makeLiteral(char* string) {
+  printf("expr: %s\n", string);
   Expr* e = new Expr(kExprLiteralString);
   e->name = string;
   return e;
