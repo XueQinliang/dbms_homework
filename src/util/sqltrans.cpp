@@ -451,6 +451,8 @@ std::string TransSelectStatementInfo(const SelectStatement* stmt){
       result += (con.op + "\n");
       result += "AND\n";
     }
+  }else{
+    result += "0\n";
   }
   return result;
 }
@@ -477,6 +479,8 @@ std::string TransDeleteStatementInfo(const DeleteStatement* stmt){
       result += (con.op + "\n");
       result += "AND\n";
     }
+  }else{
+    result += "0\n";
   }
   return result;
 }
@@ -541,6 +545,8 @@ std::string TransUpdateStatementInfo(const UpdateStatement* stmt){
       result += (con.op + "\n");
       result += "AND\n";
     }
+  }else{
+    result += "0\n";
   }
   return result;
 }
@@ -587,8 +593,7 @@ std::string TransStatementInfo(const SQLStatement* stmt){
       break;
     case kStmtTransaction:
       //事务处理
-      const TransactionStatement* tstmt = (const TransactionStatement*)stmt;
-      switch (tstmt->command)
+      switch (((const TransactionStatement*)stmt)->command)
       {
       case kBeginTransaction:
         intransaction = true;
@@ -603,11 +608,9 @@ std::string TransStatementInfo(const SQLStatement* stmt){
         commit_or_rollback = 1;
         intransaction = false;
         break;
-      
       default:
         break;
       }
-
       break;
     default:
       break;
