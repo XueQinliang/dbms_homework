@@ -597,16 +597,19 @@ std::string TransStatementInfo(const SQLStatement* stmt){
       {
       case kBeginTransaction:
         intransaction = true;
+        return "-8\n";
         break;
       case kCommitTransaction:
         /* code */
         commit_or_rollback = 0;
         intransaction = false;
+        return "-9\n";
         break;
       case kRollbackTransaction:
         /* code */
         commit_or_rollback = 1;
         intransaction = false;
+        return "-10\n";
         break;
       default:
         break;
