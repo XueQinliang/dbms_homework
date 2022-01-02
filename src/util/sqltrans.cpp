@@ -28,6 +28,7 @@ typedef struct Condition{
 }Condition;
 
 map<string, vector<string>> tablecolumns;
+map<string, map<string, string>> tablecolumntypes;
 
 Status transexpr(string tablename, Expr* expr, vector<Condition>& result){
   //cout<<expr->type<<endl;
@@ -61,14 +62,15 @@ Status transexpr(string tablename, Expr* expr, vector<Condition>& result){
       con.leftiscolumn = expr->expr->type == kExprColumnRef? "0":"1";
       if(con.leftiscolumn == "0"){
         con.leftname = string(expr->expr->name);
-        con.leftvalue = "NO";
+        con.leftvalue = "0";
         if(expr->expr->table!=nullptr){
           con.lefttable = string(expr->expr->table);
         }else{
           con.lefttable = tablename;
         }
+        con.type = tablecolumntypes[con.lefttable][con.leftname];
       }else{
-        con.leftname = "NO";
+        con.leftname = "0";
         switch (expr->expr->type)
         {
         case ExprType::kExprLiteralInt:
@@ -90,14 +92,15 @@ Status transexpr(string tablename, Expr* expr, vector<Condition>& result){
       con.rightiscolumn = expr->expr2->type == kExprColumnRef? "0":"1";
       if(con.rightiscolumn == "0"){
         con.rightname = string(expr->expr2->name);
-        con.rightvalue = "NO";
+        con.rightvalue = "0";
         if(expr->expr2->table!=nullptr){
           con.righttable = string(expr->expr2->table);
         }else{
           con.righttable = tablename;
         }
+        con.type = tablecolumntypes[con.righttable][con.rightname];
       }else{
-        con.rightname = "NO";
+        con.rightname = "0";
         switch (expr->expr2->type)
         {
         case ExprType::kExprLiteralInt:
@@ -178,7 +181,7 @@ Status transexpr(Expr* expr, vector<Condition>& result){
       con.leftiscolumn = expr->expr->type == kExprColumnRef? "0":"1";
       if(con.leftiscolumn == "0"){
         con.leftname = string(expr->expr->name);
-        con.leftvalue = "NO";
+        con.leftvalue = "0";
         if(expr->expr->table!=nullptr){
           con.lefttable = string(expr->expr->table);
         }else{
@@ -194,8 +197,10 @@ Status transexpr(Expr* expr, vector<Condition>& result){
           return Status::Fail;
           end1:;
         }
+        //printf("left\n");
+        con.type = tablecolumntypes[con.lefttable][con.leftname];
       }else{
-        con.leftname = "NO";
+        con.leftname = "0";
         switch (expr->expr->type)
         {
         case ExprType::kExprLiteralInt:
@@ -217,14 +222,14 @@ Status transexpr(Expr* expr, vector<Condition>& result){
       con.rightiscolumn = expr->expr2->type == kExprColumnRef? "0":"1";
       if(con.rightiscolumn == "0"){
         con.rightname = string(expr->expr2->name);
-        con.rightvalue = "NO";
+        con.rightvalue = "0";
         if(expr->expr2->table!=nullptr){
           con.righttable = string(expr->expr2->table);
         }else{
           for(auto table: tablecolumns){
             for(auto columnname : table.second){
-              if(columnname == con.leftname){
-                con.lefttable = string(table.first);
+              if(columnname == con.rightname){
+                con.righttable = string(table.first);
                 goto end2;
               }
             }
@@ -233,8 +238,10 @@ Status transexpr(Expr* expr, vector<Condition>& result){
           return Status::Fail;
           end2:;
         }
+        //printf("right\n");
+        con.type = tablecolumntypes[con.righttable][con.rightname];
       }else{
-        con.rightname = "NO";
+        con.rightname = "0";
         switch (expr->expr2->type)
         {
         case ExprType::kExprLiteralInt:
@@ -309,6 +316,7 @@ std::string TransInsertStatementInfo(const InsertStatement* stmt){
     printf("can't find this table:%s\n", tablename.c_str());
     return "Fail\n";
   }
+  result += (string(tablename) + "\n");
   int valuelen = stmt->values->size();
   result += (to_string(valuelen) + "\n");
   for(Expr* value : *stmt->values){
@@ -365,12 +373,14 @@ std::string TransCreateStatementInfo(const CreateStatement* stmt){
     result += to_string(columnlen);
     result += "\n";
     tablecolumns[stmt->tableName] = vector<string>();
+    tablecolumntypes[stmt->tableName] = map<string,string>();
     for(ColumnDefinition* column : *stmt->columns){
         string name = string(column->name);
         DataType type = column->type.data_type;
         string strtype = transcolumntype(type);
         result += (name + " " + strtype + "\n");
         tablecolumns[stmt->tableName].push_back(name);
+        tablecolumntypes[stmt->tableName][name] = strtype;
     }
     return result;
   }else{
@@ -383,7 +393,9 @@ std::string TransSelectStatementInfo(const SelectStatement* stmt){
   TableRef* tableref = stmt->fromTable;
   int tablenum;
   vector<string> tables;
+  //printf("test1 begin tables\n");
   if(tableref->type == TableRefType::kTableName){
+    //printf("test table\n");
     tablenum = 1;
     if(tablecolumns.find(string(tableref->name)) == tablecolumns.end()){
       printf("can't find this table: %s\n", tableref->name);
@@ -391,15 +403,18 @@ std::string TransSelectStatementInfo(const SelectStatement* stmt){
     }
     tables.push_back(string(tableref->name));
   }else if(tableref->type == TableRefType::kTableCrossProduct){
+    //printf("test cross\n");
     tablenum = tableref->list->size();
+    //printf("test %d\n", tablenum);
     for(TableRef* tf : *(tableref->list)){
-      if(tablecolumns.find(string(tableref->name)) == tablecolumns.end()){
+      if(tablecolumns.find(string(tf->name)) == tablecolumns.end()){
         printf("can't find this table: %s\n", tableref->name);
         return "Fail\n";
       }
       tables.push_back(string(tf->name));
     }  
   }
+  //printf("test1 end tables\n");
   int columnnum = stmt->selectList->size();
   vector<pair<string,string>> columns;
   for(Expr* expr : *(stmt->selectList)){
@@ -449,11 +464,11 @@ std::string TransSelectStatementInfo(const SelectStatement* stmt){
       result += (con.leftiscolumn + " " + con.lefttable + " " + con.leftname + " " + con.leftvalue + "\n");
       result += (con.rightiscolumn + " " + con.righttable + " " + con.rightname + " " + con.rightvalue + "\n");
       result += (con.op + "\n");
-      result += "AND\n";
     }
   }else{
     result += "0\n";
   }
+  result += "AND\n";
   return result;
 }
 
@@ -477,11 +492,11 @@ std::string TransDeleteStatementInfo(const DeleteStatement* stmt){
       result += (con.leftiscolumn + " " + con.lefttable + " " + con.leftname + " " + con.leftvalue + "\n");
       result += (con.rightiscolumn + " " + con.righttable + " " + con.rightname + " " + con.rightvalue + "\n");
       result += (con.op + "\n");
-      result += "AND\n";
     }
   }else{
     result += "0\n";
   }
+  result += "AND\n";
   return result;
 }
 
@@ -543,11 +558,11 @@ std::string TransUpdateStatementInfo(const UpdateStatement* stmt){
       result += (con.leftiscolumn + " " + con.lefttable + " " + con.leftname + " " + con.leftvalue + "\n");
       result += (con.rightiscolumn + " " + con.righttable + " " + con.rightname + " " + con.rightvalue + "\n");
       result += (con.op + "\n");
-      result += "AND\n";
     }
   }else{
     result += "0\n";
   }
+  result += "AND\n";
   return result;
 }
 
@@ -569,6 +584,7 @@ std::string TransImportStatementInfo(const ImportStatement* stmt){
 }
 
 std::string TransStatementInfo(const SQLStatement* stmt){
+  //cout<<stmt->type()<<endl;
   switch (stmt->type()) {
     case kStmtSelect:
       return TransSelectStatementInfo((const SelectStatement*)stmt);
@@ -590,6 +606,15 @@ std::string TransStatementInfo(const SQLStatement* stmt){
       break;
     case kStmtUpdate:
       return TransUpdateStatementInfo((const UpdateStatement*)stmt);
+      break;
+    case kStmtShow:
+      for(auto table: tablecolumns){
+        cout << table.first << endl;
+        // for(auto columnname : table.second){
+        //   cout << columnname << endl;
+        // }
+      }
+      return "";
       break;
     case kStmtTransaction:
       //事务处理
