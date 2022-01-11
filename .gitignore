@@ -1,6 +1,7 @@
 build/
 utils/
 bin/
+data/
 lib-test/
 
 # Compiled Object files
