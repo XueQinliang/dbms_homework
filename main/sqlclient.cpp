@@ -47,12 +47,30 @@ int main(int argc,char *argv[]) {
 		perror("connect");
 		exit(1);
 	}
+	printf("login as: ");
+	string user, pswd;
+	cin >> user;
+	printf("password: ");
+	cin >> pswd;
+	string userpswd = "login " + user + ":" + pswd;
+    send(sockfd, userpswd.c_str(), strlen(userpswd.c_str()), 0);
+    char res[10];
+    int ret = recv(sockfd, res, 10, 0);
+    res[ret] = '\0';
+    if(strcmp(res, "no") == 0){
+        printf("connect error !\n");
+		exit(0);
+    }
+	getchar();
 	printf("Hello to use BabeDB!\n");
 	while(1){
 		std::string query;
 		//向服务器发送字符串msg
 		cout<<"(babe)> ";
 		getline(cin, query);
+		if(query == "\n"){
+			continue;
+		}
 		hsql::SQLParserResult result;
     	hsql::SQLParser::parse(query, &result);
 		if (result.isValid()) {
@@ -63,19 +81,30 @@ int main(int argc,char *argv[]) {
 				// Print a statement summary.
 				string likesql = hsql::TransStatementInfo(result.getStatement(i));
 				// 类sql要传给spj模块，传之前要判断是否等于"Fail\n"
-				// 打印一下
-				cout<<likesql<<endl;
-				if(send(sockfd,likesql.c_str(),likesql.length(),0)==-1) {
-					perror("send");
-					exit(1);
+				// cout<<likesql<<endl;
+				if((likesql[0] >= '0' && likesql[0] <= '9') || (likesql[0] == '-' && (likesql[1] >= '0' && likesql[1] <= '9'))){
+					// 打印一下
+					cout<<likesql<<endl;
+					if(send(sockfd,likesql.c_str(),likesql.length(),0)==-1) {
+						perror("send");
+						exit(1);
+					}
+					//接受从服务器返回的信息
+					numbytes = 1;
+					do{
+						// perror("recv");
+						// exit(1);
+						numbytes = recv(sockfd,buf,1000,0);
+						//printf("len:%d\n", numbytes);
+						buf[numbytes] = '\0';
+						if(strcmp(buf, "|\n")==0){
+							printf("execute successfully!");
+						}else{
+							printf("%s",buf);
+						}
+					}while(numbytes >= 1000);
+					printf("\n");
 				}
-				//接受从服务器返回的信息
-				if((numbytes = recv(sockfd,buf,1000,0))==-1) {
-					perror("recv");
-					exit(1);
-				}
-				buf[numbytes] = '\0';
-				printf("result:%s\n",buf);
 			}
 		} else {
 			fprintf(stderr, "Given string is not a valid SQL query.\n");

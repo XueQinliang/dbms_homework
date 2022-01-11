@@ -34,7 +34,6 @@ vector<int> pidvec;
 #include <unordered_set>
 #include <unordered_map>
 #include <cstring>
-using namespace std;
 
 template<typename T> void func(void *p) {
 	T a = *(T *)p;
@@ -1207,10 +1206,10 @@ template<class T> class spj_condition_obj { //һ��Ԫ�ص���
 		T value; //������������1��
 };
 
-template<class T> class spj_condition { //һ��where�Ӿ����?
+template<class T> class spj_condition { //һ��where�Ӿ���￿
 	public:
 		spj_condition_obj<T> a, b; //Ԫ��a, b
-		string op; //�������������?��<>��<��<=��>��>=
+		string op; //������������￿��<>��<��<=��>��>=
 };
 
 template<class T> pair<spj_condition_obj<T>, spj_condition_obj<T>> get_spj_condition_obj(void *spj_c) {
@@ -1936,7 +1935,7 @@ template<class T> map<int, vector<int> *> *hash_join(pair<Table *, Table *> t, p
 }
 
 vector<pair<Table *, vector<int> > > spj_join(map<Table *, vector<int> *> pk, vector<pair<string, void *> > exprs,
-        string algo) { //���ص���pkֵ���������?
+        string algo) { //���ص���pkֵ��������￿
 	//algo = "nested", "merge", "hash"
 	vector<pair<Table *, vector<int> > > res;
 	vector<map<int, vector<int> *> *> each_join;
@@ -2655,11 +2654,9 @@ bool cmp_4var_names(const pair<string, pair<int, int> > &a, const pair<string, p
 	return a.second.first < b.second.first;
 }
 
-int get_V_column0(const vector<vector<pair<string, void *> > > &arrs)
-{
+/*int get_V_column0(const vector<vector<pair<string, void *> > > &arrs) {
 	set<string> V;
-	for(int i = 0; i < arrs.size(); i++)
-	{
+	for (int i = 0; i < arrs.size(); i++) {
 		vector<pair<string, void *> > arr = arrs[i];
 		string type = arr[0].first;
 		void *data = arr[0].second;
@@ -2667,17 +2664,17 @@ int get_V_column0(const vector<vector<pair<string, void *> > > &arrs)
 		if (strcmp(type.c_str(), "int") == 0)
 			V.insert(any2str(*(int *)data));
 		else if (strcmp(type.c_str(), "long") == 0)
-			V.insert(any2str(*(long long *)data));
-		else if (strcmp(type.c_str(), "float") == 0)
-			V.insert(any2str(*(float *)data));
-		else if (strcmp(type.c_str(), "double") == 0)
-			V.insert(any2str(*(double *)data));
-		else
-			V.insert(any2str(*(string *)data));
-	}
+			V.insert(any2str(*(long long *)data);
+			         else if (strcmp(type.c_str(), "float") == 0)
+			         V.insert(any2str(*(float *)data);
+			                  else if (strcmp(type.c_str(), "double") == 0)
+				                  V.insert(any2str(*(double *)data);
+				                           else
+					                           V.insert(any2str(*(string *)data);
+				}
 
-	return V.size();
-}
+                           return V.size();
+}*/
 
 void test_result_print(ostringstream &oss, vector<Table *> &tables, vector<pair<Table *, string> > &table_var_names,
                        vector<pair<string, void *> > &exprs, string conj, string join_algo, vector<vector<pair<string, void *> > > arrs) {
@@ -3258,6 +3255,507 @@ vector<vector<pair<string, void *> > > execute(const string &user_order) {
 	return arrs;
 }
 
+std::string return_string_execute(const string &user_order) {
+	vector<vector<pair<string, void *> > > arrs;
+
+	istringstream cin(user_order);
+
+	vector<Table *> tables;
+	vector<pair<Table *, string> > table_var_names;
+	vector<pair<string, void *> > exprs;
+	string conj, join_algo = "nested";
+
+	int n0, n1, n2;
+
+	cin >> n0;
+
+	if (n0 == -1) { //CREATE TABLE
+		string t_name;
+		cin >> t_name >> n1;
+
+		vector<pair<string, string> > columns;
+		while (n1--) {
+			string var_name, var_type;
+			cin >> var_name >> var_type;
+			columns.push_back(make_pair(var_name, var_type));
+		}
+
+		Table *t = create_table(t_name, columns);
+		table_list.push_back(t);
+		search_table[t_name] = table_list.size() - 1;
+        ostringstream oss;
+	    test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
+		return oss.str();
+	}
+
+	if (n0 == -2) { //LOAD FILE
+		string path, t_name;
+
+		getline(cin, path); //����\n
+		getline(cin, path);
+		getline(cin, t_name);
+
+		Table *t = table_list[search_table[t_name]];
+		load_data(t, path);
+
+		ostringstream oss;
+	    test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
+		return oss.str();
+	}
+
+	if (n0 == -3) { //INSERT
+		string t_name, type_ij, value_ij;
+		vector<pair<string, string> > data_i;
+
+		cin >> t_name >> n1;
+		getline(cin, type_ij); //����\n
+
+		while (n1--) {
+			getline(cin, type_ij);
+			getline(cin, value_ij);
+			data_i.push_back(make_pair(type_ij, value_ij));
+		}
+
+		Table *t = table_list[search_table[t_name]];
+		insert(t, data_i);
+
+		ostringstream oss;
+	    test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
+		return oss.str();
+	}
+
+	if (n0 == -4) { //DELETE
+		string t_name;
+		cin >> t_name >> n2;
+
+		Table *t = table_list[search_table[t_name]];
+
+		while (n2--) {
+			string type;
+
+			cin >> type;
+			//cout << type << endl;
+			if (strcmp(type.c_str(), "int") == 0) {
+				spj_condition_obj<int> *sco1 = new spj_condition_obj<int>;
+				spj_condition_obj<int> *sco2 = new spj_condition_obj<int>;
+				spj_condition<int> *sc = new spj_condition<int>;
+				string t_name;
+
+				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
+				sco1->table = table_list[search_table[t_name]];
+
+				//cout << sco1->var_con << ' ' << t_name << ' ' << sco1->var_name << ' ' << sco1->value << endl;
+				//cout << sco1 << endl;
+
+				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
+				sco2->table = table_list[search_table[t_name]];
+
+				sc->a = *sco1;
+				sc->b = *sco2;
+				cin >> sc->op;
+
+				//cout << sc -> op << endl;
+
+				exprs.push_back(make_pair("int", (void *)sc));
+
+				//cout << exprs[exprs.size() - 1].second << endl;
+
+			} else if (strcmp(type.c_str(), "long") == 0) {
+				spj_condition_obj<long long> *sco1 = new spj_condition_obj<long long>;
+				spj_condition_obj<long long> *sco2 = new spj_condition_obj<long long>;
+				spj_condition<long long> *sc = new spj_condition<long long>;
+				string t_name;
+
+				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
+				sco1->table = table_list[search_table[t_name]];
+
+				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
+				sco2->table = table_list[search_table[t_name]];
+
+				sc->a = *sco1;
+				sc->b = *sco2;
+				cin >> sc->op;
+
+				exprs.push_back(make_pair("long long", (void *)sc));
+			} else if (strcmp(type.c_str(), "float") == 0) {
+				spj_condition_obj<float> *sco1 = new spj_condition_obj<float>;
+				spj_condition_obj<float> *sco2 = new spj_condition_obj<float>;
+				spj_condition<float> *sc = new spj_condition<float>;
+				string t_name;
+
+				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
+				sco1->table = table_list[search_table[t_name]];
+
+				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
+				sco2->table = table_list[search_table[t_name]];
+
+				sc->a = *sco1;
+				sc->b = *sco2;
+				cin >> sc->op;
+
+				exprs.push_back(make_pair("float", (void *)sc));
+			} else if (strcmp(type.c_str(), "double") == 0) {
+				spj_condition_obj<double> *sco1 = new spj_condition_obj<double>;
+				spj_condition_obj<double> *sco2 = new spj_condition_obj<double>;
+				spj_condition<double> *sc = new spj_condition<double>;
+				string t_name;
+
+				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
+				sco1->table = table_list[search_table[t_name]];
+
+				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
+				sco2->table = table_list[search_table[t_name]];
+
+				sc->a = *sco1;
+				sc->b = *sco2;
+				cin >> sc->op;
+
+				exprs.push_back(make_pair("double", (void *)sc));
+			} else {
+				spj_condition_obj<string> *sco1 = new spj_condition_obj<string>;
+				spj_condition_obj<string> *sco2 = new spj_condition_obj<string>;
+				spj_condition<string> *sc = new spj_condition<string>;
+				string t_name;
+
+				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
+				sco1->table = table_list[search_table[t_name]];
+
+				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
+				sco2->table = table_list[search_table[t_name]];
+
+				sc->a = *sco1;
+				sc->b = *sco2;
+				cin >> sc->op;
+
+				exprs.push_back(make_pair("string", (void *)sc));
+			}
+		}
+		cin >> conj;
+		if (conj == "NO")
+			conj = "";
+
+		vector<int> *del_pk = spj_select(t, exprs, conj);
+		t_delete(t, del_pk);
+
+		ostringstream oss;
+	    test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
+		return oss.str();
+	}
+
+	if (n0 == -5) { //UPDATE
+		string t_name, var_name, type_j, value_j;
+		cin >> t_name;
+		cin >> var_name >> type_j;
+		getline(cin, value_j); //����\n
+		getline(cin, value_j);
+		cin >> n2;
+
+		Table *t = table_list[search_table[t_name]];
+
+		while (n2--) {
+			string type;
+
+			cin >> type;
+			//cout << type << endl;
+			if (strcmp(type.c_str(), "int") == 0) {
+				spj_condition_obj<int> *sco1 = new spj_condition_obj<int>;
+				spj_condition_obj<int> *sco2 = new spj_condition_obj<int>;
+				spj_condition<int> *sc = new spj_condition<int>;
+				string t_name;
+
+				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
+				sco1->table = table_list[search_table[t_name]];
+
+				//cout << sco1->var_con << ' ' << t_name << ' ' << sco1->var_name << ' ' << sco1->value << endl;
+				//cout << sco1 << endl;
+
+				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
+				sco2->table = table_list[search_table[t_name]];
+
+				sc->a = *sco1;
+				sc->b = *sco2;
+				cin >> sc->op;
+
+				//cout << sc -> op << endl;
+
+				exprs.push_back(make_pair("int", (void *)sc));
+
+				//cout << exprs[exprs.size() - 1].second << endl;
+
+			} else if (strcmp(type.c_str(), "long") == 0) {
+				spj_condition_obj<long long> *sco1 = new spj_condition_obj<long long>;
+				spj_condition_obj<long long> *sco2 = new spj_condition_obj<long long>;
+				spj_condition<long long> *sc = new spj_condition<long long>;
+				string t_name;
+
+				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
+				sco1->table = table_list[search_table[t_name]];
+
+				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
+				sco2->table = table_list[search_table[t_name]];
+
+				sc->a = *sco1;
+				sc->b = *sco2;
+				cin >> sc->op;
+
+				exprs.push_back(make_pair("long long", (void *)sc));
+			} else if (strcmp(type.c_str(), "float") == 0) {
+				spj_condition_obj<float> *sco1 = new spj_condition_obj<float>;
+				spj_condition_obj<float> *sco2 = new spj_condition_obj<float>;
+				spj_condition<float> *sc = new spj_condition<float>;
+				string t_name;
+
+				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
+				sco1->table = table_list[search_table[t_name]];
+
+				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
+				sco2->table = table_list[search_table[t_name]];
+
+				sc->a = *sco1;
+				sc->b = *sco2;
+				cin >> sc->op;
+
+				exprs.push_back(make_pair("float", (void *)sc));
+			} else if (strcmp(type.c_str(), "double") == 0) {
+				spj_condition_obj<double> *sco1 = new spj_condition_obj<double>;
+				spj_condition_obj<double> *sco2 = new spj_condition_obj<double>;
+				spj_condition<double> *sc = new spj_condition<double>;
+				string t_name;
+
+				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
+				sco1->table = table_list[search_table[t_name]];
+
+				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
+				sco2->table = table_list[search_table[t_name]];
+
+				sc->a = *sco1;
+				sc->b = *sco2;
+				cin >> sc->op;
+
+				exprs.push_back(make_pair("double", (void *)sc));
+			} else {
+				spj_condition_obj<string> *sco1 = new spj_condition_obj<string>;
+				spj_condition_obj<string> *sco2 = new spj_condition_obj<string>;
+				spj_condition<string> *sc = new spj_condition<string>;
+				string t_name;
+
+				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
+				sco1->table = table_list[search_table[t_name]];
+
+				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
+				sco2->table = table_list[search_table[t_name]];
+
+				sc->a = *sco1;
+				sc->b = *sco2;
+				cin >> sc->op;
+
+				exprs.push_back(make_pair("string", (void *)sc));
+			}
+		}
+		cin >> conj;
+		if (conj == "NO")
+			conj = "";
+
+		vector<int> *upd_pk = spj_select(t, exprs, conj);
+		update(t, upd_pk, var_name, value_j);
+
+		ostringstream oss;
+	    test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
+		return oss.str();
+	}
+
+	if (n0 == -6) { //CREATE INDEX
+		string t_name, var_name;
+		cin >> t_name >> var_name;
+
+		Table *t = table_list[search_table[t_name]];
+		create_index(t, var_name);
+
+		ostringstream oss;
+	    test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
+		return oss.str();
+	}
+
+	if (n0 == -7) { //DROP
+		string t_name;
+		cin >> t_name;
+
+		Table *t = table_list[search_table[t_name]];
+		drop(t);
+
+		ostringstream oss;
+	    test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
+		return oss.str();
+	}
+
+	if (n0 == -8) { //BEGIN
+		transection_begin();
+
+		ostringstream oss;
+	    test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
+		return oss.str();
+	}
+
+	if (n0 == -9) { //COMMIT
+		transection_commit();
+
+		ostringstream oss;
+	    test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
+		return oss.str();
+	}
+
+	if (n0 == -10) { //ROLLBACK
+		transection_rollback();
+
+		ostringstream oss;
+	    test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
+		return oss.str();
+	}
+
+	while (n0--) { //spj
+		string t_name;
+		cin >> t_name;
+		tables.push_back(table_list[search_table[t_name]]);
+	}
+
+	cin >> n1;
+	while (n1--) {
+		string t_name, var_name;
+		cin >> t_name;
+		if (t_name != "*") {
+			cin >> var_name;
+			Table *t = table_list[search_table[t_name]];
+			table_var_names.push_back(make_pair(t, var_name));
+		} else {
+			vector<pair<string, pair<int, int> > > sort_4var_names;
+			for (int i = 0; i < tables.size(); i++) {
+				Table *t = tables[i];
+				for (map<string, string>::iterator j = t->attr.begin(); j != t->attr.end(); ++j)
+					if (str2any<int>(j->second))
+						sort_4var_names.push_back(make_pair(j->first, make_pair(i, str2any<int>(j->second))));
+			}
+			sort(sort_4var_names.begin(), sort_4var_names.end(), cmp_4var_names);
+
+			for (int i = 0; i < sort_4var_names.size(); i++)
+				table_var_names.push_back(make_pair(tables[sort_4var_names[i].second.first], sort_4var_names[i].first));
+			break;
+		}
+	}
+
+	cin >> n2;
+	while (n2--) {
+		string type;
+
+		cin >> type;
+		//cout << type << endl;
+		if (strcmp(type.c_str(), "int") == 0) {
+			spj_condition_obj<int> *sco1 = new spj_condition_obj<int>;
+			spj_condition_obj<int> *sco2 = new spj_condition_obj<int>;
+			spj_condition<int> *sc = new spj_condition<int>;
+			string t_name;
+
+			cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
+			sco1->table = table_list[search_table[t_name]];
+
+			//cout << sco1->var_con << ' ' << t_name << ' ' << sco1->var_name << ' ' << sco1->value << endl;
+			//cout << sco1 << endl;
+
+			cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
+			sco2->table = table_list[search_table[t_name]];
+
+			sc->a = *sco1;
+			sc->b = *sco2;
+			cin >> sc->op;
+
+			//cout << sc -> op << endl;
+
+			exprs.push_back(make_pair("int", (void *)sc));
+
+			//cout << exprs[exprs.size() - 1].second << endl;
+
+		} else if (strcmp(type.c_str(), "long") == 0) {
+			spj_condition_obj<long long> *sco1 = new spj_condition_obj<long long>;
+			spj_condition_obj<long long> *sco2 = new spj_condition_obj<long long>;
+			spj_condition<long long> *sc = new spj_condition<long long>;
+			string t_name;
+
+			cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
+			sco1->table = table_list[search_table[t_name]];
+
+			cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
+			sco2->table = table_list[search_table[t_name]];
+
+			sc->a = *sco1;
+			sc->b = *sco2;
+			cin >> sc->op;
+
+			exprs.push_back(make_pair("long long", (void *)sc));
+		} else if (strcmp(type.c_str(), "float") == 0) {
+			spj_condition_obj<float> *sco1 = new spj_condition_obj<float>;
+			spj_condition_obj<float> *sco2 = new spj_condition_obj<float>;
+			spj_condition<float> *sc = new spj_condition<float>;
+			string t_name;
+
+			cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
+			sco1->table = table_list[search_table[t_name]];
+
+			cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
+			sco2->table = table_list[search_table[t_name]];
+
+			sc->a = *sco1;
+			sc->b = *sco2;
+			cin >> sc->op;
+
+			exprs.push_back(make_pair("float", (void *)sc));
+		} else if (strcmp(type.c_str(), "double") == 0) {
+			spj_condition_obj<double> *sco1 = new spj_condition_obj<double>;
+			spj_condition_obj<double> *sco2 = new spj_condition_obj<double>;
+			spj_condition<double> *sc = new spj_condition<double>;
+			string t_name;
+
+			cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
+			sco1->table = table_list[search_table[t_name]];
+
+			cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
+			sco2->table = table_list[search_table[t_name]];
+
+			sc->a = *sco1;
+			sc->b = *sco2;
+			cin >> sc->op;
+
+			exprs.push_back(make_pair("double", (void *)sc));
+		} else {
+			spj_condition_obj<string> *sco1 = new spj_condition_obj<string>;
+			spj_condition_obj<string> *sco2 = new spj_condition_obj<string>;
+			spj_condition<string> *sc = new spj_condition<string>;
+			string t_name;
+
+			cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
+			sco1->table = table_list[search_table[t_name]];
+
+			cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
+			sco2->table = table_list[search_table[t_name]];
+
+			sc->a = *sco1;
+			sc->b = *sco2;
+			cin >> sc->op;
+
+			exprs.push_back(make_pair("string", (void *)sc));
+		}
+	}
+	cin >> conj;
+	if (conj == "NO")
+		conj = "";
+
+	arrs = spj(tables, table_var_names, exprs, conj, join_algo);
+
+	ostringstream oss;
+	test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
+	cout << oss.str() << endl;
+
+	return oss.str();
+}
+
 void test_print_all_tables() {
 	for (int i = 0; i < table_list.size(); i++) {
 		Table *t = table_list[i];
@@ -3270,12 +3768,12 @@ void test_print_all_tables() {
 		cout << "NO table" << endl << endl;
 }
 
-pair<pair<int, int>, set<string> > execute4opt(const string &user_order) { //make_pair(make_pair(行数T、值数V), 表上索引的集合)
+/*tuple<int, set<string>, int> execute4opt(const string &user_order) {
 	vector<vector<pair<string, void *> > > arrs;
 
 	istringstream cin(user_order);
-	//cout << "user_order:" << endl;
-	//cout << user_order << endl << endl;
+	cout << "user_order:" << endl;
+	cout << user_order << endl << endl;
 
 	vector<Table *> tables;
 	vector<pair<Table *, string> > table_var_names;
@@ -3423,28 +3921,24 @@ pair<pair<int, int>, set<string> > execute4opt(const string &user_order) { //mak
 	//cout << tables[0]->table_name << ' ' << table_var_names[0].first->table_name << ',' << table_var_names[0].second << " conj=" << conj << endl;
 	arrs = spj(tables, table_var_names, exprs, conj, join_algo);
 
-	//ostringstream oss;
-	//test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
-	//cout << oss.str() << endl;
+	ostringstream oss;
+	test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
+	cout << oss.str() << endl;
 
-	//cout << "ret11: ";
-	//cout << arrs.size() << endl;
+	cout << "ret1: ";
+	cout << arrs.size() << endl;
+	cout << "ret2: ";
+	for (set<string>::iterator i = tables[0]->column_index_name.begin(); i != tables[0]->column_index_name.end(); ++i)
+		cout << *i << ' ';
+cout << "ret3: ":
+	     V_column0 = get_V_column0(arrs);
+	cout << V_column0(arrs) << endl;
+	cout << endl;
 
-	//cout << "ret12: ";
-	int V_column0 = get_V_column0(arrs);
-	//cout << V_column0 << endl;
-	//cout << endl;
-
-	//cout << "ret2: ";
-	//for(set<string>::iterator i = tables[0]->column_index_name.begin(); i != tables[0]->column_index_name.end(); ++i)
-	//	cout << *i << ' ';
-	//cout << endl;
-
-	//tuple<int, set<string>, int> = 
-	//return make_tuple(arrs.size(), tables[0]->column_index_name, get_V_column0);
-	return make_pair(make_pair(arrs.size(), V_column0), tables[0]->column_index_name);
+	//tuple<int, set<string>, int> =
+	return make_tuple(arrs.size(), tables[0]->column_index_name, get_V_column0);
 	//return make_pair(arrs.size(), tables[0]->column_index_name);
-}
+}*/
 
 void test_execute() {
 	//spj_init();
@@ -3720,126 +4214,133 @@ bool cmp_by_value(const PAIR& lhs, const PAIR& rhs) {
     return lhs.second < rhs.second;
 }
 
-std::string sql_rewrite(std::string sql){
-    std::vector<std::string> sql_parts;
-    // const std::string get_index = "1\nSUPPLIER\n1\nS_NAME\n0\nNO";
-    if(string_split(sql,sql_parts)<6){
-        std::cout<<"syntax error"<<std::endl;
-        return sql;
-    }
-    // one table no rewrite
-    if(sql_parts[0]=="1"){
-        return sql;
-    }
-    int condition_idx = 1;
-    condition_idx += std::stoi(sql_parts[0]);
-    condition_idx += std::stoi(sql_parts[condition_idx]);
-    condition_idx += 1;
-    int condition_num = std::stoi(sql_parts[condition_idx]);
-    std::map<std::string,int> join_cost;
-    std::vector<std::string> equal_select;
-    std::vector<std::string> range_select;
-    for(int i=0;i<condition_num;i++){
-        int left_idx = condition_idx + i*4 + 2;
-        int right_idx = left_idx +1;
-        int type_idx = left_idx +2;
-        if(std::stoi(sql_parts[left_idx].substr(0,1)) ^ std::stoi(sql_parts[right_idx].substr(0,1))  ){
-            //select
-            if(sql_parts[type_idx]=="="){
-                for(int j=-1;j<=2;j++){
-                    equal_select.push_back(sql_parts[left_idx+j]);
-                }
-            }
-            else{
-                for(int j=-1;j<=2;j++){
-                    range_select.push_back(sql_parts[left_idx+j]);
-                }
-            }
-        }
-        else{
-            //two columns,calculate cost
-            std::vector<std::string> left_part;
-            std::vector<std::string> right_part;
-            if(string_split(sql_parts[left_idx],left_part," ")!=4){
-                std::cout<<"syntax error"<<std::endl;
-            }
-            if(string_split(sql_parts[right_idx],right_part," ")!=4){
-                std::cout<<"syntax error"<<std::endl;
-            }
-            std::string left_table = left_part[1];
-            std::string left_col = left_part[2];
-            std::string right_table = right_part[1];
-            std::string right_col = right_part[2];
-            std::string left_sql = "1\n"+left_table+"\n1\n"+left_table+" "+left_col+"\n0\nNO";
-            std::string right_sql = "1\n"+right_table+"\n1\n"+right_table+" "+right_col+"\n0\nNO";
-            auto right_result = execute4opt(right_sql);
-            auto left_result = execute4opt(left_sql);
-            // std::set<std::string> t1,t2;
-            // auto left_result = std::make_pair(1,t1);
-            // auto right_result = std::make_pair(1,t2);
-            int left_table_size = left_result.first.first;
-			int left_col_size = left_result.first.second;
-            int right_table_size = right_result.first.first;
-			int right_col_size = right_result.first.second;
-            std::set<std::string> left_index_columns = left_result.second;
-            std::set<std::string> right_index_columns = right_result.second;
 
-            int left_score = 0, right_score = 0;
-            if(left_index_columns.find(left_col)!=left_index_columns.end()){//left have index
-                if(right_index_columns.find(right_col) == right_index_columns.end()){
-					//right no index
-					auto tmp = sql_parts[left_idx];
-					sql_parts[left_idx] = sql_parts[right_idx];
-					sql_parts[right_idx] = tmp;
-				}
-				else if(left_table_size > right_table_size){
-					auto tmp = sql_parts[left_idx];
-					sql_parts[left_idx] = sql_parts[right_idx];
-					sql_parts[right_idx] = tmp;
-				}
-            }
-			else{
-				//left no index
-				if(right_index_columns.find(right_col) != right_index_columns.end()){
-					//right have index
-					auto tmp = sql_parts[left_idx];
-					sql_parts[left_idx] = sql_parts[right_idx];
-					sql_parts[right_idx] = tmp;
-				}
-			}
-            std::string cond;
-            for(int j=-1;j<=2;j++){
-                cond+= sql_parts[left_idx+j]+"\n";
-            }
-            cond = cond.substr(0,cond.length()-1);
-            join_cost[cond]=left_table_size * right_table_size / std::max(left_col_size,right_col_size);
-        }    
-    }
-    std::string newsql;
-    for(int i=0;i<=condition_idx;i++){
-        newsql += sql_parts[i]+"\n";
-    }
-    for(int i=0;i<equal_select.size();i++){
-        newsql += equal_select[i]+"\n";
-    }
-    for(int i=0;i<range_select.size();i++){
-        newsql += range_select[i]+"\n";
-    }
-    // std::vector<std::pair<std::string,int> > tmp;
-    // for(auto& i:join_cost){
-    //     tmp.push_back(i);
-    // }
-    // std::sort(tmp.begin(),tmp.end(),[&](std::pair<std::string,int>& a, std::pair<std::string,int>& b){
-    //     return a.second < b.second;
-    // });
-    std::vector<PAIR> tmp(join_cost.begin(), join_cost.end());
-    std::sort(tmp.begin(),tmp.end(),cmp_by_value);
-    for(auto i:tmp){
-        newsql += i.first+"\n";
-    }
-    newsql += sql_parts[sql_parts.size()-1];
-    return newsql;
+/*
+std::string sql_rewrite(std::string sql) {
+	if (sql[0] != '-' && sql[0] != '1') {
+		string str = "", user_order = "";
+		ifstream fin("join_l_sql.txt");
+		getline(fin, str);
+		while (str != "") {
+			user_order = user_order + str + '\n';
+			getline(fin, str);
+		}
+		fin.close();
+		return user_order;
+	}
+std::vector<std::string> sql_parts;
+// const std::string get_index = "1\nSUPPLIER\n1\nS_NAME\n0\nNO";
+if (string_split(sql, sql_parts) < 6) {
+	std::cout << "syntax error" << std::endl;
+	return sql;
 }
+cout << "STEP1: SPLIT" << endl;
+for (auto s : sql_parts) {
+	std::cout << s << std::endl;
+}
+// one table no rewrite
+if (sql_parts[0] == "1") {
+	return sql;
+}
+int condition_idx = 1;
+condition_idx += std::stoi(sql_parts[0]);
+condition_idx += std::stoi(sql_parts[condition_idx]);
+condition_idx += 1;
+int condition_num = std::stoi(sql_parts[condition_idx]);
+std::map<std::string, int> join_cost;
+std::vector<std::string> equal_select;
+std::vector<std::string> range_select;
+for (int i = 0; i < condition_num; i++) {
+	int left_idx = condition_idx + i * 4 + 2;
+	int right_idx = left_idx + 1;
+	int type_idx = left_idx + 2;
+	if (std::stoi(sql_parts[left_idx].substr(0, 1)) ^ std::stoi(sql_parts[right_idx].substr(0, 1))  ) {
+		//select
+		if (sql_parts[type_idx] == "=") {
+			for (int j = -1; j <= 2; j++) {
+				equal_select.push_back(sql_parts[left_idx + j]);
+			}
+		} else {
+			for (int j = -1; j <= 2; j++) {
+				range_select.push_back(sql_parts[left_idx + j]);
+			}
+		}
+	} else {
+		//two columns,calculate cost
+		std::vector<std::string> left_part;
+		std::vector<std::string> right_part;
+		if (string_split(sql_parts[left_idx], left_part, " ") != 4) {
+			std::cout << "syntax error" << std::endl;
+		}
+		if (string_split(sql_parts[right_idx], right_part, " ") != 4) {
+			std::cout << "syntax error" << std::endl;
+		}
+		std::string left_table = left_part[1];
+		std::string left_col = left_part[2];
+		std::string right_table = right_part[1];
+		std::string right_col = right_part[2];
+		//std::string left_sql = "1\n" + left_table + "\n1\n" + left_col + "\n0\nNO";
+		//std::string right_sql = "1\n" + right_table + "\n1\n" + right_col + "\n0\nNO";
+		std::string left_sql = "1\n" + left_table + "\n1\n*\n0\nNO";
+		std::string right_sql = "1\n" + right_table + "\n1\n*\n0\nNO";
+		cout << "STEP2: before e4opt_left" << endl;
+		cout << left_sql << endl;
+		auto left_result = execute4opt(left_sql);
+		cout << "STEP3: before e4opt_right" << endl;
+		auto right_result = execute4opt(right_sql);
+		cout << "STEP4: after e4opt" << endl;
+		// std::set<std::string> t1,t2;
+		// auto left_result = std::make_pair(1,t1);
+		// auto right_result = std::make_pair(1,t2);
+		int left_size = left_result.first;
+		int right_size = right_result.first;
+		std::set<std::string> left_index_columns = left_result.second;
+		std::set<std::string> right_index_columns = right_result.second;
+		int left_score = 0, right_score = 0;
+		if (left_index_columns.find(left_col) != left_index_columns.end()) {// no index
+			left_score = (int)(1000 / left_size);
+		} else {
+			left_score = -left_size * 10;
+		}
+		if (right_index_columns.find(right_col) != right_index_columns.end()) {
+			right_score = (int)(1000 / right_size);
+		} else {
+			right_score = -right_size * 10;
+		}
+		int score = left_score + right_score;
+		std::string cond;
+		for (int j = -1; j <= 2; j++) {
+			cond += sql_parts[left_idx + j] + "\n";
+		}
+		cond = cond.substr(0, cond.length() - 1);
+		join_cost[cond] = score;
+	}
+}
+std::string newsql;
+for (int i = 0; i <= condition_idx; i++) {
+	newsql += sql_parts[i] + "\n";
+}
+for (int i = 0; i < equal_select.size(); i++) {
+	newsql += equal_select[i] + "\n";
+}
+for (int i = 0; i < range_select.size(); i++) {
+	newsql += range_select[i] + "\n";
+}
+// std::vector<std::pair<std::string,int> > tmp;
+// for(auto& i:join_cost){
+//     tmp.push_back(i);
+// }
+// std::sort(tmp.begin(),tmp.end(),[&](std::pair<std::string,int>& a, std::pair<std::string,int>& b){
+//     return a.second < b.second;
+// });
+std::vector<PAIR> tmp(join_cost.begin(), join_cost.end());
+std::sort(tmp.begin(), tmp.end(), cmp_by_value);
+for (auto i : tmp) {
+	newsql += i.first + "\n";
+}
+newsql += sql_parts[sql_parts.size() - 1];
+return newsql;
+} */
 
 void test_05() {
 	//spj_init();
@@ -3861,7 +4362,7 @@ void test_05() {
 
 		if (user_order[0] != '-') {
 			cout << endl << "OPTIMIZED order:" << endl;
-			cout << sql_rewrite(user_order) << endl;
+			//cout << sql_rewrite(user_order) << endl;
 		}
 
 		cout << endl << "EXECUTING..." << endl << endl;
@@ -3885,7 +4386,8 @@ void test_final() {
 	cout << "Press ENTER to continue";
 	getline(cin, str);
 	while (1) {
-		str = ""; user_order = "";
+		str = "";
+		user_order = "";
 		ifstream fin("soh.txt");
 		getline(fin, str);
 		while (str != "") {
@@ -3898,7 +4400,7 @@ void test_final() {
 
 		if (user_order[0] != '-') {
 			cout << endl << "OPTIMIZED order:" << endl;
-			cout << sql_rewrite(user_order) << endl;
+			//cout << sql_rewrite(user_order) << endl;
 		}
 
 		cout << endl << "EXECUTING..." << endl << endl;
@@ -3914,560 +4416,33 @@ void test_final() {
 	//fin.close();
 }
 
-void print_order_optimize(const string &user_order)
-{
-	cout << "ORIGIN order:" << endl;
-	cout << user_order << endl;
-	if (user_order[0] != '-') {
-		cout << endl << "OPTIMIZED order:" << endl;
-		cout << sql_rewrite(user_order) << endl;
-	}
-	cout << endl;
-}
-string return_string_execute(const string &user_order) {
-	print_order_optimize(user_order);
-
-	vector<vector<pair<string, void *> > > arrs;
-
-	istringstream cin(user_order);
-
-	vector<Table *> tables;
-	vector<pair<Table *, string> > table_var_names;
-	vector<pair<string, void *> > exprs;
-	string conj, join_algo = "nested";
-
-	int n0, n1, n2;
-
-	cin >> n0;
-
-	if (n0 == -1) { //CREATE TABLE
-		string t_name;
-		cin >> t_name >> n1;
-
-		vector<pair<string, string> > columns;
-		while (n1--) {
-			string var_name, var_type;
-			cin >> var_name >> var_type;
-			columns.push_back(make_pair(var_name, var_type));
-		}
-
-		Table *t = create_table(t_name, columns);
-		table_list.push_back(t);
-		search_table[t_name] = table_list.size() - 1;
-
-		ostringstream oss;
-		test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
-		return oss.str();
-	}
-
-	if (n0 == -2) { //LOAD FILE
-		string path, t_name;
-
-		getline(cin, path); //����\n
-		getline(cin, path);
-		getline(cin, t_name);
-
-		Table *t = table_list[search_table[t_name]];
-		load_data(t, path);
-
-		ostringstream oss;
-		test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
-		return oss.str();
-	}
-
-	if (n0 == -3) { //INSERT
-		string t_name, type_ij, value_ij;
-		vector<pair<string, string> > data_i;
-
-		cin >> t_name >> n1;
-		getline(cin, type_ij); //����\n
-
-		while (n1--) {
-			getline(cin, type_ij);
-			getline(cin, value_ij);
-			data_i.push_back(make_pair(type_ij, value_ij));
-		}
-
-		Table *t = table_list[search_table[t_name]];
-		insert(t, data_i);
-
-		ostringstream oss;
-		test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
-		return oss.str();
-	}
-
-	if (n0 == -4) { //DELETE
-		string t_name;
-		cin >> t_name >> n2;
-
-		Table *t = table_list[search_table[t_name]];
-
-		while (n2--) {
-			string type;
-
-			cin >> type;
-			//cout << type << endl;
-			if (strcmp(type.c_str(), "int") == 0) {
-				spj_condition_obj<int> *sco1 = new spj_condition_obj<int>;
-				spj_condition_obj<int> *sco2 = new spj_condition_obj<int>;
-				spj_condition<int> *sc = new spj_condition<int>;
-				string t_name;
-
-				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
-				sco1->table = table_list[search_table[t_name]];
-
-				//cout << sco1->var_con << ' ' << t_name << ' ' << sco1->var_name << ' ' << sco1->value << endl;
-				//cout << sco1 << endl;
-
-				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
-				sco2->table = table_list[search_table[t_name]];
-
-				sc->a = *sco1;
-				sc->b = *sco2;
-				cin >> sc->op;
-
-				//cout << sc -> op << endl;
-
-				exprs.push_back(make_pair("int", (void *)sc));
-
-				//cout << exprs[exprs.size() - 1].second << endl;
-
-			} else if (strcmp(type.c_str(), "long") == 0) {
-				spj_condition_obj<long long> *sco1 = new spj_condition_obj<long long>;
-				spj_condition_obj<long long> *sco2 = new spj_condition_obj<long long>;
-				spj_condition<long long> *sc = new spj_condition<long long>;
-				string t_name;
-
-				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
-				sco1->table = table_list[search_table[t_name]];
-
-				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
-				sco2->table = table_list[search_table[t_name]];
-
-				sc->a = *sco1;
-				sc->b = *sco2;
-				cin >> sc->op;
-
-				exprs.push_back(make_pair("long long", (void *)sc));
-			} else if (strcmp(type.c_str(), "float") == 0) {
-				spj_condition_obj<float> *sco1 = new spj_condition_obj<float>;
-				spj_condition_obj<float> *sco2 = new spj_condition_obj<float>;
-				spj_condition<float> *sc = new spj_condition<float>;
-				string t_name;
-
-				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
-				sco1->table = table_list[search_table[t_name]];
-
-				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
-				sco2->table = table_list[search_table[t_name]];
-
-				sc->a = *sco1;
-				sc->b = *sco2;
-				cin >> sc->op;
-
-				exprs.push_back(make_pair("float", (void *)sc));
-			} else if (strcmp(type.c_str(), "double") == 0) {
-				spj_condition_obj<double> *sco1 = new spj_condition_obj<double>;
-				spj_condition_obj<double> *sco2 = new spj_condition_obj<double>;
-				spj_condition<double> *sc = new spj_condition<double>;
-				string t_name;
-
-				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
-				sco1->table = table_list[search_table[t_name]];
-
-				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
-				sco2->table = table_list[search_table[t_name]];
-
-				sc->a = *sco1;
-				sc->b = *sco2;
-				cin >> sc->op;
-
-				exprs.push_back(make_pair("double", (void *)sc));
-			} else {
-				spj_condition_obj<string> *sco1 = new spj_condition_obj<string>;
-				spj_condition_obj<string> *sco2 = new spj_condition_obj<string>;
-				spj_condition<string> *sc = new spj_condition<string>;
-				string t_name;
-
-				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
-				sco1->table = table_list[search_table[t_name]];
-
-				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
-				sco2->table = table_list[search_table[t_name]];
-
-				sc->a = *sco1;
-				sc->b = *sco2;
-				cin >> sc->op;
-
-				exprs.push_back(make_pair("string", (void *)sc));
-			}
-		}
-		cin >> conj;
-		if (conj == "NO")
-			conj = "";
-
-		vector<int> *del_pk = spj_select(t, exprs, conj);
-		t_delete(t, del_pk);
-
-		ostringstream oss;
-		test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
-		return oss.str();
-	}
-
-	if (n0 == -5) { //UPDATE
-		string t_name, var_name, type_j, value_j;
-		cin >> t_name;
-		cin >> var_name >> type_j;
-		getline(cin, value_j); //����\n
-		getline(cin, value_j);
-		cin >> n2;
-
-		Table *t = table_list[search_table[t_name]];
-
-		while (n2--) {
-			string type;
-
-			cin >> type;
-			//cout << type << endl;
-			if (strcmp(type.c_str(), "int") == 0) {
-				spj_condition_obj<int> *sco1 = new spj_condition_obj<int>;
-				spj_condition_obj<int> *sco2 = new spj_condition_obj<int>;
-				spj_condition<int> *sc = new spj_condition<int>;
-				string t_name;
-
-				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
-				sco1->table = table_list[search_table[t_name]];
-
-				//cout << sco1->var_con << ' ' << t_name << ' ' << sco1->var_name << ' ' << sco1->value << endl;
-				//cout << sco1 << endl;
-
-				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
-				sco2->table = table_list[search_table[t_name]];
-
-				sc->a = *sco1;
-				sc->b = *sco2;
-				cin >> sc->op;
-
-				//cout << sc -> op << endl;
-
-				exprs.push_back(make_pair("int", (void *)sc));
-
-				//cout << exprs[exprs.size() - 1].second << endl;
-
-			} else if (strcmp(type.c_str(), "long") == 0) {
-				spj_condition_obj<long long> *sco1 = new spj_condition_obj<long long>;
-				spj_condition_obj<long long> *sco2 = new spj_condition_obj<long long>;
-				spj_condition<long long> *sc = new spj_condition<long long>;
-				string t_name;
-
-				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
-				sco1->table = table_list[search_table[t_name]];
-
-				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
-				sco2->table = table_list[search_table[t_name]];
-
-				sc->a = *sco1;
-				sc->b = *sco2;
-				cin >> sc->op;
-
-				exprs.push_back(make_pair("long long", (void *)sc));
-			} else if (strcmp(type.c_str(), "float") == 0) {
-				spj_condition_obj<float> *sco1 = new spj_condition_obj<float>;
-				spj_condition_obj<float> *sco2 = new spj_condition_obj<float>;
-				spj_condition<float> *sc = new spj_condition<float>;
-				string t_name;
-
-				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
-				sco1->table = table_list[search_table[t_name]];
-
-				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
-				sco2->table = table_list[search_table[t_name]];
-
-				sc->a = *sco1;
-				sc->b = *sco2;
-				cin >> sc->op;
-
-				exprs.push_back(make_pair("float", (void *)sc));
-			} else if (strcmp(type.c_str(), "double") == 0) {
-				spj_condition_obj<double> *sco1 = new spj_condition_obj<double>;
-				spj_condition_obj<double> *sco2 = new spj_condition_obj<double>;
-				spj_condition<double> *sc = new spj_condition<double>;
-				string t_name;
-
-				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
-				sco1->table = table_list[search_table[t_name]];
-
-				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
-				sco2->table = table_list[search_table[t_name]];
-
-				sc->a = *sco1;
-				sc->b = *sco2;
-				cin >> sc->op;
-
-				exprs.push_back(make_pair("double", (void *)sc));
-			} else {
-				spj_condition_obj<string> *sco1 = new spj_condition_obj<string>;
-				spj_condition_obj<string> *sco2 = new spj_condition_obj<string>;
-				spj_condition<string> *sc = new spj_condition<string>;
-				string t_name;
-
-				cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
-				sco1->table = table_list[search_table[t_name]];
-
-				cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
-				sco2->table = table_list[search_table[t_name]];
-
-				sc->a = *sco1;
-				sc->b = *sco2;
-				cin >> sc->op;
-
-				exprs.push_back(make_pair("string", (void *)sc));
-			}
-		}
-		cin >> conj;
-		if (conj == "NO")
-			conj = "";
-
-		vector<int> *upd_pk = spj_select(t, exprs, conj);
-		update(t, upd_pk, var_name, value_j);
-
-		ostringstream oss;
-		test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
-		return oss.str();
-	}
-
-	if (n0 == -6) { //CREATE INDEX
-		string t_name, var_name;
-		cin >> t_name >> var_name;
-
-		Table *t = table_list[search_table[t_name]];
-		create_index(t, var_name);
-
-		ostringstream oss;
-		test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
-		return oss.str();
-	}
-
-	if (n0 == -7) { //DROP
-		string t_name;
-		cin >> t_name;
-
-		Table *t = table_list[search_table[t_name]];
-		drop(t);
-
-		ostringstream oss;
-		test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
-		return oss.str();
-	}
-
-	if (n0 == -8) { //BEGIN
-		transection_begin();
-
-		ostringstream oss;
-		test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
-		return oss.str();
-	}
-
-	if (n0 == -9) { //COMMIT
-		transection_commit();
-
-		ostringstream oss;
-		test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
-		return oss.str();
-	}
-
-	if (n0 == -10) { //ROLLBACK
-		transection_rollback();
-
-		ostringstream oss;
-		test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
-		return oss.str();
-	}
-
-	while (n0--) { //spj
-		string t_name;
-		cin >> t_name;
-		tables.push_back(table_list[search_table[t_name]]);
-	}
-
-	cin >> n1;
-	while (n1--) {
-		string t_name, var_name;
-		cin >> t_name;
-		if (t_name != "*") {
-			cin >> var_name;
-			Table *t = table_list[search_table[t_name]];
-			table_var_names.push_back(make_pair(t, var_name));
-		} else {
-			vector<pair<string, pair<int, int> > > sort_4var_names;
-			for (int i = 0; i < tables.size(); i++) {
-				Table *t = tables[i];
-				for (map<string, string>::iterator j = t->attr.begin(); j != t->attr.end(); ++j)
-					if (str2any<int>(j->second))
-						sort_4var_names.push_back(make_pair(j->first, make_pair(i, str2any<int>(j->second))));
-			}
-			sort(sort_4var_names.begin(), sort_4var_names.end(), cmp_4var_names);
-
-			for (int i = 0; i < sort_4var_names.size(); i++)
-				table_var_names.push_back(make_pair(tables[sort_4var_names[i].second.first], sort_4var_names[i].first));
-			break;
-		}
-	}
-
-	cin >> n2;
-	while (n2--) {
-		string type;
-
-		cin >> type;
-		//cout << type << endl;
-		if (strcmp(type.c_str(), "int") == 0) {
-			spj_condition_obj<int> *sco1 = new spj_condition_obj<int>;
-			spj_condition_obj<int> *sco2 = new spj_condition_obj<int>;
-			spj_condition<int> *sc = new spj_condition<int>;
-			string t_name;
-
-			cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
-			sco1->table = table_list[search_table[t_name]];
-
-			//cout << sco1->var_con << ' ' << t_name << ' ' << sco1->var_name << ' ' << sco1->value << endl;
-			//cout << sco1 << endl;
-
-			cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
-			sco2->table = table_list[search_table[t_name]];
-
-			sc->a = *sco1;
-			sc->b = *sco2;
-			cin >> sc->op;
-
-			//cout << sc -> op << endl;
-
-			exprs.push_back(make_pair("int", (void *)sc));
-
-			//cout << exprs[exprs.size() - 1].second << endl;
-
-		} else if (strcmp(type.c_str(), "long") == 0) {
-			spj_condition_obj<long long> *sco1 = new spj_condition_obj<long long>;
-			spj_condition_obj<long long> *sco2 = new spj_condition_obj<long long>;
-			spj_condition<long long> *sc = new spj_condition<long long>;
-			string t_name;
-
-			cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
-			sco1->table = table_list[search_table[t_name]];
-
-			cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
-			sco2->table = table_list[search_table[t_name]];
-
-			sc->a = *sco1;
-			sc->b = *sco2;
-			cin >> sc->op;
-
-			exprs.push_back(make_pair("long long", (void *)sc));
-		} else if (strcmp(type.c_str(), "float") == 0) {
-			spj_condition_obj<float> *sco1 = new spj_condition_obj<float>;
-			spj_condition_obj<float> *sco2 = new spj_condition_obj<float>;
-			spj_condition<float> *sc = new spj_condition<float>;
-			string t_name;
-
-			cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
-			sco1->table = table_list[search_table[t_name]];
-
-			cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
-			sco2->table = table_list[search_table[t_name]];
-
-			sc->a = *sco1;
-			sc->b = *sco2;
-			cin >> sc->op;
-
-			exprs.push_back(make_pair("float", (void *)sc));
-		} else if (strcmp(type.c_str(), "double") == 0) {
-			spj_condition_obj<double> *sco1 = new spj_condition_obj<double>;
-			spj_condition_obj<double> *sco2 = new spj_condition_obj<double>;
-			spj_condition<double> *sc = new spj_condition<double>;
-			string t_name;
-
-			cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
-			sco1->table = table_list[search_table[t_name]];
-
-			cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
-			sco2->table = table_list[search_table[t_name]];
-
-			sc->a = *sco1;
-			sc->b = *sco2;
-			cin >> sc->op;
-
-			exprs.push_back(make_pair("double", (void *)sc));
-		} else {
-			spj_condition_obj<string> *sco1 = new spj_condition_obj<string>;
-			spj_condition_obj<string> *sco2 = new spj_condition_obj<string>;
-			spj_condition<string> *sc = new spj_condition<string>;
-			string t_name;
-
-			cin >> sco1->var_con >> t_name >> sco1->var_name >> sco1->value;
-			sco1->table = table_list[search_table[t_name]];
-
-			cin >> sco2->var_con >> t_name >> sco2->var_name >> sco2->value;
-			sco2->table = table_list[search_table[t_name]];
-
-			sc->a = *sco1;
-			sc->b = *sco2;
-			cin >> sc->op;
-
-			exprs.push_back(make_pair("string", (void *)sc));
-		}
-	}
-	cin >> conj;
-	if (conj == "NO")
-		conj = "";
-
-	arrs = spj(tables, table_var_names, exprs, conj, join_algo);
-
-	ostringstream oss;
-	test_result_print(oss, tables, table_var_names, exprs, conj, join_algo, arrs);
-	cout << "EXECUTING..." << endl << endl;
-	cout << oss.str() << endl;
-
-	return oss.str();
-}
-
-void test_return_string_execute() {
+void final(const string &user_order) {
 	//spj_init();
 	//cout << "init OK: " << table_list.size() << "tables" << endl << endl;
 	//istream &fin = cin;
-	string str = "", user_order = "";
+	string str = "";
 
 	test_print_all_tables();
-	cout << "Press ENTER to continue";
-	getline(cin, str);
-	while (1) {
-		str = ""; user_order = "";
-		ifstream fin("soh.txt");
-		getline(fin, str);
-		while (str != "") {
-			user_order = user_order + str + '\n';
-			getline(fin, str);
-		}
-		fin.close();
 
-		cout << return_string_execute(user_order) << endl;
-		cout << "EXECUTING(test_return_string_execute)↑" << endl;
-
-		if (user_order[0] == '-')
-			test_print_all_tables();
-		cout << "Press ENTER to continue";
-		getline(cin, str);
-		//system("pause");
+	if (user_order[0] != '-') {
+		cout << endl << "OPTIMIZED order: No OPT" << endl;
+		//cout << sql_rewrite(user_order) << endl;
 	}
+
+	cout << endl << "EXECUTING..." << endl << endl;
+	execute(user_order);
+
+	if (user_order[0] == '-')
+		test_print_all_tables();
 
 	//fin.close();
 }
 
-/*int main() {
+/*
+int main() {
 //	string *t = new string;
 //	*t = "hello world";
 //	func<string>(t);
-
-	test_return_string_execute();
-	return 0;
 
 	test_final();
 	return 0;
@@ -4591,48 +4566,12 @@ void*route(void*arg)
             printf("push back %d\n", i);
             exit(0);
         }
-		if(strncmp(buff, "login", 5) == 0){
-			//表明登录测试
-			string userpswd = string(buff);
-			string::size_type pos = userpswd.find_first_of(":");
-			string cuser = userpswd.substr(6, pos-6);
-			string cpswd = userpswd.substr(pos+1);
-			ifstream infile;
-			infile.open("user.txt", ios::in);
-			if (!infile.is_open())
-			{
-				cout << "读取文件失败" << endl;
-				return 0;
-			}
-			//第一种读取方法，
-			string user, pswd;
-			bool suc = false;
-			while (infile>>user>>pswd)
-			{
-				cout << user << " " << pswd << endl;//输出读取的文本文件数据
-				cout << cuser << " " << pswd << endl <<endl;
-				if(user == cuser && pswd == cpswd){
-					string sig = "yes";
-					suc = true;
-					if(send(rarg->new_fd,sig.c_str(),sig.length(),0)==-1)
-						perror("send");
-					break;
-				}
-			}
-			if (suc == false){
-				string sig = "no";
-				if(send(rarg->new_fd,sig.c_str(),sig.length(),0)==-1)
-					perror("send");
-			}
-			continue;
-		}
-
-
         //将从客户端接收到的信息再发回客户端
         //执行sql，获取结果，放到buff中，这里可以考虑用一个string，然后转成c_str
         printf("execute...\n");
+        // sleep(10); //假装执行10s，试试
         string res = return_string_execute(buff);
-        cout<<"return row number:"<<res.length()<<endl;
+        cout<<"res:"<<res.length()<<" "<<res<<endl;
         if(send(rarg->new_fd,res.c_str(),res.length(),0)==-1)
             perror("send");
         //解锁

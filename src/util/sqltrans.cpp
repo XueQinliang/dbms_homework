@@ -313,8 +313,9 @@ std::string TransInsertStatementInfo(const InsertStatement* stmt){
   string result = "-3\n";
   string tablename = stmt->tableName;
   if(tablecolumns.find(tablename) == tablecolumns.end()){
-    printf("can't find this table:%s\n", tablename.c_str());
-    return "Fail\n";
+    char returnstr[100];
+    sprintf(returnstr, "can't find this table:%s\n", tablename.c_str());
+    return string(returnstr);
   }
   result += (string(tablename) + "\n");
   int valuelen = stmt->values->size();
@@ -350,23 +351,33 @@ std::string TransCreateStatementInfo(const CreateStatement* stmt){
   if(stmt->type == CreateType::kCreateIndex){
     string result = "-6\n";
     string tablename = string(stmt->tableName);
+    
     if(tablecolumns.find(tablename) == tablecolumns.end()){
       printf("can't find this table:%s\n", tablename.c_str());
-      return "Fail\n";
+      char returnstr[100];
+      sprintf(returnstr, "can't find this table:%s\nFail\n", tablename.c_str());
+      return string(returnstr);
     }
     string indexname = string(stmt->indexName);
     string columnname;
     if(stmt->indexColumns->size()!=1){
       printf("you can only use index on one column, in future we will develop multicolumn index\n");
-      return "Fail\n";
+      char returnstr[100];
+      sprintf(returnstr, "you can only use index on one column, in future we will develop multicolumn index\n");
+      return string(returnstr);
     }else{
       columnname = string((*stmt->indexColumns)[0]);
     }
     result += (tablename + " " + columnname + "\n"); 
     return result;
   }else if(stmt->type == CreateType::kCreateTable){
-    string result = "-1\n";
     string tablename = string(stmt->tableName);
+    if(tablecolumns.find(tablename)!=tablecolumns.end()){
+      //这个表已经存在
+      string result = "This table has existed!\nFail\n";
+      return result;
+    }
+    string result = "-1\n";
     result += tablename;
     result += "\n";
     int columnlen = stmt->columns->size();
@@ -382,6 +393,13 @@ std::string TransCreateStatementInfo(const CreateStatement* stmt){
         tablecolumns[stmt->tableName].push_back(name);
         tablecolumntypes[stmt->tableName][name] = strtype;
     }
+    // printf("start to write\n");
+    // FILE *fp = fopen("../../main/table_meta","w");
+    // int size = sizeof(tablecolumns);
+    // printf("size:%d\n", size);
+    // fwrite(&size, sizeof(int), 1, fp);
+    // fwrite(&tablecolumns, sizeof(tablecolumns), 1, fp);
+    // fclose(fp);
     return result;
   }else{
     return "Fail\n";
@@ -399,7 +417,9 @@ std::string TransSelectStatementInfo(const SelectStatement* stmt){
     tablenum = 1;
     if(tablecolumns.find(string(tableref->name)) == tablecolumns.end()){
       printf("can't find this table: %s\n", tableref->name);
-      return "Fail\n";
+      char returnstr[100];
+      sprintf(returnstr, "can't find this table:%s\nFail\n", tableref->name);
+      return string(returnstr);
     }
     tables.push_back(string(tableref->name));
   }else if(tableref->type == TableRefType::kTableCrossProduct){
@@ -409,7 +429,9 @@ std::string TransSelectStatementInfo(const SelectStatement* stmt){
     for(TableRef* tf : *(tableref->list)){
       if(tablecolumns.find(string(tf->name)) == tablecolumns.end()){
         printf("can't find this table: %s\n", tableref->name);
-        return "Fail\n";
+        char returnstr[100];
+        sprintf(returnstr, "can't find this table:%s\nFail\n", tableref->name);
+        return string(returnstr);
       }
       tables.push_back(string(tf->name));
     }  
@@ -477,7 +499,9 @@ std::string TransDeleteStatementInfo(const DeleteStatement* stmt){
   string tablename = string(stmt->tableName);
   if(tablecolumns.find(tablename) == tablecolumns.end()){
     printf("can't find this table:%s\n", tablename.c_str());
-    return "Fail\n";
+    char returnstr[100];
+    sprintf(returnstr, "can't find this table:%s\nFail\n", tablename.c_str());
+    return string(returnstr);
   }
   result += (tablename + "\n");
   vector<Condition> conresult;
@@ -505,9 +529,16 @@ std::string TransDropStatementInfo(const DropStatement* stmt){
   string tablename = string(stmt->name);
   if(tablecolumns.find(tablename) == tablecolumns.end()){
     printf("can't find this table:%s\n", tablename.c_str());
-    return "Fail\n";
+    char returnstr[100];
+    sprintf(returnstr, "can't find this table:%s\nFail\n", tablename.c_str());
+    return string(returnstr);
   }
   result += tablename;
+  tablecolumns.erase(tablename);
+  tablecolumntypes.erase(tablename);
+  // FILE *fp = fopen("../../main/table_meta","wb");
+  // fwrite(&tablecolumns, sizeof(tablecolumns), 1, fp);
+  // fclose(fp);
   return result;
 }
 
@@ -516,11 +547,15 @@ std::string TransUpdateStatementInfo(const UpdateStatement* stmt){
   string tablename = string(stmt->table->name); //只考虑有一个表
   if(tablecolumns.find(tablename) == tablecolumns.end()){
     printf("can't find this table:%s\n", tablename.c_str());
-    return "Fail\n";
+    char returnstr[100];
+    sprintf(returnstr, "can't find this table:%s\nFail\n", tablename.c_str());
+    return string(returnstr);
   }
   if(stmt->updates->size()==0){
     printf("update nothing\n");
-    return "Fail\n";
+    char returnstr[100];
+    sprintf(returnstr, "update nothing\nFail\n");
+    return string(returnstr);
   }
   string columnname = string((*stmt->updates)[0]->column); //这里不严谨，考虑输入正确的情况下只更新一个值
   ExprType type = (*stmt->updates)[0]->value->type;
@@ -571,12 +606,16 @@ std::string TransImportStatementInfo(const ImportStatement* stmt){
   string filepath = string(stmt->filePath);
   if(!fopen(filepath.c_str(), "r")){
     printf("open file %s wrong!\n", filepath.c_str());
-    return "Fail\n";
+    char returnstr[100];
+    sprintf(returnstr, "open file %s wrong!\n", filepath.c_str());
+    return string(returnstr);
   }
   string tablename = string(stmt->tableName);
   if(tablecolumns.find(tablename) == tablecolumns.end()){
     printf("can't find this table:%s\n", tablename.c_str());
-    return "Fail\n";
+    char returnstr[100];
+    sprintf(returnstr, "can't find this table:%s\n", tablename.c_str());
+    return string(returnstr);
   }
   result += (filepath + "\n");
   result += tablename;

@@ -27,7 +27,6 @@ void inprint(const DatetimeField& colType, uintmax_t numIndent) {
 }
 
 void printTableRefInfo(TableRef* table, uintmax_t numIndent) {
-  printf("table type:%d\n", table->type);
   switch (table->type) {
     case kTableName:
       inprint(table->name, numIndent);
@@ -87,7 +86,6 @@ void printOperatorExpression(Expr* expr, uintmax_t numIndent) {
 
 void printExpression(Expr* expr, uintmax_t numIndent) {
   if (!expr) return;
-  printf("%d\n", expr->type);
   switch (expr->type) {
     case kExprStar:
       inprint("*", numIndent);

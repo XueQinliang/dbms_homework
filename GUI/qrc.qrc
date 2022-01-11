@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>xinyuan.png</file>
+        <file>商标.png</file>
+        <file>商标新.png</file>
+    </qresource>
+</RCC>
